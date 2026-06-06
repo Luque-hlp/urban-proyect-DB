@@ -167,7 +167,7 @@ formulario.addEventListener('submit', async (e) => {
         nombre: document.getElementById('nombre').value,
         telefono: document.getElementById('telegram').value,
         correo: document.getElementById('correo').value,
-        descripcion: document.getElementById('Descripcion').value,
+        descripcion: document.getElementById('descripcion').value,
     };
 
     try {
