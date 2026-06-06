@@ -157,16 +157,16 @@ function incrementMetric(elementId) {
     el.textContent = (current + 1).toLocaleString();
 }
 
-const formulario = document.getElementById('1XcWazR8jnZ31JyeAhany8eu4DFVFRMLMUuWLl71Ume8'); // Pon el ID de tu formulario HTML
+const formulario = document.getElementById('incidentForm'); // Pon el ID de tu formulario HTML
 
 formulario.addEventListener('submit', async (e) => {
     e.preventDefault(); // 1. Evita que la página se recargue
 
     // 2. Capturas los datos de los inputs de tu HTML
     const datosReporte = {
-        nombre: document.getElementById('Nombre_Ciudadano').value,
-        telefono: document.getElementById('Telegram_Ciudadano').value,
-        correo: document.getElementById('Correo_Ciudadano').value,
+        nombre: document.getElementById('nombre').value,
+        telefono: document.getElementById('telegram').value,
+        correo: document.getElementById('correo').value,
         descripcion: document.getElementById('Descripcion').value,
     };
 
