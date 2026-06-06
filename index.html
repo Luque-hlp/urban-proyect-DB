@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrbanIA | Gestión Inteligente de Incidentes Urbanos</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Estilos propios -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <header>
+        <div class="container nav-flex">
+            <div class="logo">
+                <i class="fa-solid fa-city"></i> UrbanIA
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <button class="btn btn-secondary" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
+                <button class="btn btn-primary" onclick="showSection('dashboard')">Panel Admin</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- HERO -->
+        <section id="hero-section" class="hero">
+            <h1>Reporta daños urbanos en segundos</h1>
+            <p>Inteligencia Artificial y Automatización para ciudades más eficientes.</p>
+            <div class="hero-actions">
+                <button class="btn btn-primary" onclick="showSection('report')"><i class="fa-solid fa-camera"></i> Reportar Incidente</button>
+                <button class="btn btn-secondary" onclick="showSection('ticket-check')"><i class="fa-solid fa-ticket"></i> Consultar Ticket</button>
+                <button class="btn btn-secondary" onclick="showSection('map-view')"><i class="fa-solid fa-map"></i> Ver Mapa de Incidentes</button>
+            </div>
+        </section>
+
+        <!-- MÉTRICAS -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="metric-reports">1,248</div>
+                <div class="metric-label">Reportes recibidos</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="metric-solved">982</div>
+                <div class="metric-label">Casos solucionados</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="metric-time">4.2h</div>
+                <div class="metric-label">Tiempo promedio de atención</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: var(--danger);" id="metric-critical">12</div>
+                <div class="metric-label">Casos críticos activos</div>
+            </div>
+        </div>
+
+        <!-- FORMULARIO -->
+        <section id="report-section" class="hidden">
+            <div class="form-section">
+                <h2 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-pen-to-square"></i> Nuevo Reporte Ciudadano</h2>
+                <form id="incidentForm" onsubmit="handleSubmit(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre Completo *</label>
+                            <input type="text" id="nombre" required pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo letras y espacios">
+                        </div>
+                        <div class="form-group">
+                            <label>Documento de Identidad *</label>
+                            <input type="text" id="documento" required pattern="[0-9]{6,12}" title="6 a 12 dígitos">
+                        </div>
+                        <div class="form-group">
+                            <label>Usuario de Telegram</label>
+                            <input type="text" id="telegram" placeholder="@usuario">
+                        </div>
+                        <div class="form-group">
+                            <label>Correo Electrónico *</label>
+                            <input type="email" id="correo" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono *</label>
+                            <input type="tel" id="telefono" required pattern="[0-9+\-\s]{7,15}">
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Incidente *</label>
+                            <select id="tipo" required onchange="simulateAIAnalysis()">
+                                <option value="">Seleccione...</option>
+                                <option value="bache">Bache en vía</option>
+                                <option value="fuga">Fuga de agua</option>
+                                <option value="cableado">Cableado expuesto</option>
+                                <option value="alumbrado">Falla de alumbrado</option>
+                                <option value="semaforo">Semáforo averiado</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 1.5rem;">
+                        <label>Descripción detallada *</label>
+                        <textarea id="descripcion" rows="3" required oninput="simulateAIAnalysis()"></textarea>
+                    </div>
+
+                    <!-- Geolocalización -->
+                    <div style="margin-top: 1.5rem;">
+                        <label style="font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Ubicación GPS en Tiempo Real</label>
+                        <div class="gps-status" id="gps-status">
+                            <div class="gps-dot"></div>
+                            <span id="gps-text">Obteniendo ubicación...</span>
+                        </div>
+                        <div id="map"></div>
+                        <div class="form-grid" style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted);">
+                            <div>Lat: <span id="val-lat" style="color: var(--text); font-weight: 600;">--</span></div>
+                            <div>Lng: <span id="val-lng" style="color: var(--text); font-weight: 600;">--</span></div>
+                            <div>Precisión: <span id="val-acc" style="color: var(--text); font-weight: 600;">--</span> m</div>
+                            <div>Dirección: <span id="val-dir" style="color: var(--text); font-weight: 600;">Buscando...</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Imágenes -->
+                    <div class="form-group" style="margin-top: 1.5rem;">
+                        <label>Evidencia Fotográfica (Máx 3)</label>
+                        <input type="file" id="imagenes" accept="image/*" multiple onchange="handleImageUpload(this)" style="padding: 0.5rem;">
+                        <div id="image-preview" style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;"></div>
+                    </div>
+
+                    <!-- Análisis IA -->
+                    <div id="ai-analysis" class="ai-box hidden">
+                        <h4 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-robot"></i> Análisis de Inteligencia Artificial (GPT-4o Vision & NLP)</h4>
+                        <p style="font-size: 0.9rem; margin-bottom: 1rem; opacity: 0.8;">Procesando imagen y contexto textual...</p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <span class="ai-badge" style="background: rgba(255,255,255,0.2);">Categoría: <span id="ai-cat">--</span></span>
+                            <span class="ai-badge" id="ai-severity">Severidad: --</span>
+                            <span class="ai-badge" style="background: rgba(255,255,255,0.2);">Confianza: <span id="ai-conf">--</span>%</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="showSection('hero')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="submit-btn">
+                            <i class="fa-solid fa-paper-plane"></i> Enviar Reporte
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- DASHBOARD -->
+        <section id="dashboard-section" class="hidden">
+            <h2 style="margin-bottom: 1.5rem;">Panel de Control Administrativo</h2>
+            
+            <h3 style="margin-bottom: 1rem; color: var(--text-muted);">Seguimiento de Cuadrillas en Tiempo Real</h3>
+            <div class="tracking-card">
+                <div class="crew-avatar">C1</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 700;">Cuadrilla Vial Norte</div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted);">Dirigiéndose a: Cra 45 # 26-12</div>
+                    <div style="font-size: 0.8rem; color: var(--primary); margin-top: 0.25rem;"><i class="fa-solid fa-location-arrow"></i> ETA: 8 minutos</div>
+                </div>
+                <span class="status-badge status-progress">En camino</span>
+            </div>
+
+            <div class="dashboard-filters">
+                <input type="date" class="btn btn-secondary" style="padding: 0.5rem;">
+                <select class="btn btn-secondary" style="padding: 0.5rem;">
+                    <option>Todos los estados</option>
+                    <option>Abierto</option>
+                    <option>En progreso</option>
+                    <option>Cerrado</option>
+                </select>
+                <select class="btn btn-secondary" style="padding: 0.5rem;">
+                    <option>Todas las prioridades</option>
+                    <option>Crítica</option>
+                    <option>Alta</option>
+                    <option>Moderada</option>
+                </select>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Fecha</th>
+                            <th>Categoría</th>
+                            <th>Prioridad</th>
+                            <th>Estado</th>
+                            <th>Dirección</th>
+                            <th>Ciudadano</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboard-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CONSULTA DE TICKET -->
+        <section id="ticket-check-section" class="hidden">
+            <div class="form-section" style="max-width: 600px; margin: 0 auto;">
+                <h2 style="margin-bottom: 1.5rem; text-align: center;">Consultar Estado de tu Ticket</h2>
+                <div class="form-group">
+                    <label>ID del Ticket (Ej: URB-2026-8842)</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="ticket-search" placeholder="Ingresa tu ID" style="flex: 1;">
+                        <button class="btn btn-primary" onclick="searchTicket()">Buscar</button>
+                    </div>
+                </div>
+                
+                <div id="ticket-result" class="hidden" style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                        <h3 id="res-id">URB-2026-8842</h3>
+                        <span class="status-badge status-progress">En reparación</span>
+                    </div>
+                    <p style="color: var(--text-muted); margin-bottom: 0.5rem;"><strong>Creado:</strong> 05 Jun 2026, 14:30</p>
+                    <p style="color: var(--text-muted); margin-bottom: 1rem;"><strong>Última actualización:</strong> 06 Jun 2026, 09:15</p>
+                    
+                    <div style="background: var(--bg); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                        <strong>Observaciones del técnico:</strong>
+                        <p style="margin-top: 0.5rem; font-size: 0.95rem;">"Se identificó la fuga en la válvula principal. Se requiere corte de agua programado para las 22:00h para realizar el cambio de pieza."</p>
+                    </div>
+                    
+                    <div style="border: 2px dashed var(--border); padding: 1rem; text-align: center; border-radius: 0.5rem; color: var(--text-muted);">
+                        <i class="fa-solid fa-image" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                        <p>Evidencia fotográfica de la reparación (Disponible al finalizar)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">
+        <strong id="toast-title">Éxito</strong>
+        <p id="toast-msg" style="font-size: 0.9rem; margin-top: 0.25rem;">Operación completada.</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/form.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
