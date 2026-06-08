@@ -168,8 +168,34 @@ formulario.addEventListener('submit', async (e) => {
         telefono: document.getElementById('telegram').value,
         correo: document.getElementById('correo').value,
         descripcion: document.getElementById('descripcion').value,
+        tipo: document.getElementById('tipo').value
     };
 
+    document.getElementById('formIncidente').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData();
+  // Agrega tus campos de texto normales
+  formData.append('Nombre_Ciudadano', document.getElementById('nombre').value);
+  formData.append('Descripcion', document.getElementById('descripcion').value);
+  
+  // Agrega el archivo de la imagen (la propiedad la llamaremos 'foto')
+  const fileInput = document.getElementById('foto');
+  if (fileInput.files.length > 0) {
+    formData.append('foto', fileInput.files[0]);
+  }
+
+  // ENVIAR AL WEBHOOK PÚBLICO DE NGROK
+  try {
+    const response = await fetch('https://coherent-matron-barrier.ngrok-free.dev/webhook/29ApHw83Vse0i5y/30870b', {
+      method: 'POST',
+      body: formData // FormData establece automáticamente el encabezado multipart/form-data
+    });
+    if (response.ok) alert('Reporte enviado con éxito');
+  } catch (error) {
+    console.error('Error al enviar:', error);
+  }
+});
     try {
         // 3. LA LÍNEA CLAVE: Envía los datos a tu Webhook de n8n mediante ngrok
         const respuesta = await fetch('https://coherent-matron-barrier.ngrok-free.dev/webhook-test/4d53bed1-f40c-455b-862f-9be97891663b', {
